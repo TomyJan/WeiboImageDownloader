@@ -13,7 +13,7 @@ class ConfigurationManager {
     logLevel: 'debug',
     imgUrlMapFile: 'imgs.txt',
     downloadPath: './download',
-    downloadSize: "large",
+    downloadSize: 'large',
     downloadTimeout: 5000,
     downloadRetry: 3,
     downloadRetryDelay: 5000,

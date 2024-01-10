@@ -14,7 +14,9 @@ const imgList = fs.readFileSync(config.imgUrlMapFile, 'utf-8').split('\n')
 
 // 创建下载目录
 if (!fs.existsSync(config.downloadPath + '/' + config.downloadSize)) {
-  fs.mkdirSync(config.downloadPath + '/' + config.downloadSize, { recursive: true })
+  fs.mkdirSync(config.downloadPath + '/' + config.downloadSize, {
+    recursive: true,
+  })
 }
 
 // 下载图片
@@ -32,14 +34,25 @@ let downloadSuccessListFile = path.join(
   `${config.downloadSize}-downloadSuccessList.txt`
 )
 for (const imgUrl of imgList) {
-  logger.info('准备下载第', downloadCount + 1, '/', imgList.length, '个文件: ', imgUrl)
+  logger.info(
+    '准备下载第',
+    downloadCount + 1,
+    '/',
+    imgList.length,
+    '个文件: ',
+    imgUrl
+  )
   if (imgUrl === '') {
     logger.warn('文件URL为空，跳过下载')
     continue
   }
   downloadCount++
   const imgFileName = imgUrl + '.jpg'
-  const imgFilePath = path.join(config.downloadPath, config.downloadSize, imgFileName)
+  const imgFilePath = path.join(
+    config.downloadPath,
+    config.downloadSize,
+    imgFileName
+  )
   // logger.debug('imgFilePath: ', imgFilePath)
   if (fs.existsSync(imgFilePath)) {
     logger.debug('文件已存在，跳过下载')
@@ -112,50 +125,51 @@ function download(url, filePath) {
   let maxRetries = config.downloadRetry
   let timeout = config.downloadTimeout
   return new Promise((resolve, reject) => {
-    let retries = 0;
+    let retries = 0
 
     function attemptDownload() {
-      const file = fs.createWriteStream(filePath);
+      const file = fs.createWriteStream(filePath)
       const request = http.get(
         url,
         {
-          Referer: 'http://weibo.com/u/1699432410?refer_flag=1001030103_&is_all=1',
+          Referer:
+            'http://weibo.com/u/1699432410?refer_flag=1001030103_&is_all=1',
         },
         (response) => {
-          response.pipe(file);
+          response.pipe(file)
           file.on('finish', () => {
-            file.close();
-            resolve({ code: 0, msg: 'success' });
-          });
+            file.close()
+            resolve({ code: 0, msg: 'success' })
+          })
         }
-      );
+      )
 
       request.on('error', (err) => {
-        fs.unlinkSync(filePath);
-        reject({ code: -1, msg: err.message });
-      });
+        fs.unlinkSync(filePath)
+        reject({ code: -1, msg: err.message })
+      })
 
       // 设置请求超时时间
       request.setTimeout(timeout, () => {
-        request.abort();
-        retries++;
+        request.abort()
+        retries++
         if (retries < maxRetries) {
           // 等待后重试
-          delay(config.downloadRetryDelay);
-          attemptDownload();
+          delay(config.downloadRetryDelay)
+          attemptDownload()
         } else {
-          fs.unlinkSync(filePath);
-          reject({ code: -1, msg: 'Request timed out' });
+          fs.unlinkSync(filePath)
+          reject({ code: -1, msg: 'Request timed out' })
         }
-      });
+      })
     }
     // 开始首次下载尝试
-    attemptDownload();
-  });
+    attemptDownload()
+  })
 }
 
 function delay(ms) {
   return new Promise((resolve) => {
-    setTimeout(resolve, ms);
-  });
+    setTimeout(resolve, ms)
+  })
 }

@@ -33,7 +33,7 @@ class ConfigurationManager {
           logger.error(
             '配置文件格式错误:',
             jsonError,
-            ', 请检查或删除后重新启动',
+            ', 请检查或删除后重新启动'
           )
           exit(1)
         }
@@ -47,7 +47,7 @@ class ConfigurationManager {
               typeof ConfigurationManager.defaultConfig[key]
           ) {
             logger.warn(
-              `配置项 ${key}: ${this.config[key]} 非法，使用默认值 ${ConfigurationManager.defaultConfig[key]} ...`,
+              `配置项 ${key}: ${this.config[key]} 非法，使用默认值 ${ConfigurationManager.defaultConfig[key]} ...`
             )
             this.config[key] = ConfigurationManager.defaultConfig[key]
             configChanged = true
@@ -60,7 +60,7 @@ class ConfigurationManager {
           fs.writeFileSync(
             this.configFileName,
             JSON.stringify(this.config, null, 2),
-            'utf-8',
+            'utf-8'
           )
         }
       } else {
@@ -69,7 +69,7 @@ class ConfigurationManager {
         fs.writeFileSync(
           this.configFileName,
           JSON.stringify(ConfigurationManager.defaultConfig, null, 2),
-          'utf-8',
+          'utf-8'
         )
         this.config = { ...ConfigurationManager.defaultConfig }
       }

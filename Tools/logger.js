@@ -31,9 +31,7 @@ class Logger {
     fs.appendFile(currentLogFilePath, logMessage + '\n', (err) => {
       if (err) {
         console.log(
-          chalk.yellow(
-            `[${timestamp}] [WARN  ] 写入日志文件时发生错误：${err}`,
-          ),
+          chalk.yellow(`[${timestamp}] [WARN  ] 写入日志文件时发生错误：${err}`)
         )
       }
     })

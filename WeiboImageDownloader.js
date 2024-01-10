@@ -25,11 +25,11 @@ let downloadFailedList = []
 let downloadSuccessList = []
 let downloadFailedListFile = path.join(
   config.downloadPath,
-  'downloadFailedList.txt',
+  'downloadFailedList.txt'
 )
 let downloadSuccessListFile = path.join(
   config.downloadPath,
-  'downloadSuccessList.txt',
+  'downloadSuccessList.txt'
 )
 for (const imgUrl of imgList) {
   if (imgUrl === '') {
@@ -47,18 +47,26 @@ for (const imgUrl of imgList) {
   }
   logger.debug('文件不存在，开始下载')
   const downloadStartTime = new Date().getTime()
-  const downloadRsp = await download(`http://tvax1.sinaimg.cn/large/${imgUrl}.jpg`, imgFilePath)
+  const downloadRsp = await download(
+    `http://tvax1.sinaimg.cn/large/${imgUrl}.jpg`,
+    imgFilePath
+  )
   const downloadEndTime = new Date().getTime()
   if (downloadRsp.code === 0) {
     logger.info(
       '下载成功，耗时',
       (downloadEndTime - downloadStartTime) / 1000,
-      '秒',
+      '秒'
     )
     downloadSuccessCount++
     downloadSuccessList.push(imgUrl)
   } else {
-    logger.warn('下载失败，错误码', downloadRsp.code, '，错误信息', downloadRsp.msg)
+    logger.warn(
+      '下载失败，错误码',
+      downloadRsp.code,
+      '，错误信息',
+      downloadRsp.msg
+    )
     downloadFailedCount++
     downloadFailedList.push(imgUrl)
   }
@@ -69,7 +77,7 @@ if (downloadFailedList.length > 0) {
   fs.writeFileSync(
     downloadFailedListFile,
     downloadFailedList.join('\n'),
-    'utf-8',
+    'utf-8'
   )
 }
 // 保存下载成功列表
@@ -77,7 +85,7 @@ if (downloadSuccessList.length > 0) {
   fs.writeFileSync(
     downloadSuccessListFile,
     downloadSuccessList.join('\n'),
-    'utf-8',
+    'utf-8'
   )
 }
 
@@ -91,7 +99,6 @@ if (downloadSuccessCount > 0) {
   logger.info('下载成功列表已保存至', downloadSuccessListFile)
 }
 
-
 /**
  * 下载文件
  * @param {string} url 文件URL
@@ -101,15 +108,24 @@ if (downloadSuccessCount > 0) {
 function download(url, filePath) {
   return new Promise((resolve, reject) => {
     const file = fs.createWriteStream(filePath)
-    http.get(url, {Referer: 'http://weibo.com/u/1699432410?refer_flag=1001030103_&is_all=1'}, (response) => {
-      response.pipe(file)
-      file.on('finish', () => {
-        file.close()
-        resolve({ code: 0, msg: 'success' })
+    http
+      .get(
+        url,
+        {
+          Referer:
+            'http://weibo.com/u/1699432410?refer_flag=1001030103_&is_all=1',
+        },
+        (response) => {
+          response.pipe(file)
+          file.on('finish', () => {
+            file.close()
+            resolve({ code: 0, msg: 'success' })
+          })
+        }
+      )
+      .on('error', (err) => {
+        fs.unlinkSync(filePath)
+        reject({ code: -1, msg: err.message })
       })
-    }).on('error', (err) => {
-      fs.unlinkSync(filePath)
-      reject({ code: -1, msg: err.message })
-    })
   })
 }

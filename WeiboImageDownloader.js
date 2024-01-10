@@ -3,7 +3,6 @@ import fs from 'fs'
 import path from 'path'
 import logger from './Tools/logger.js'
 import config from './Tools/config.js'
-import { exit } from 'process'
 
 logger.info('WeiboImageDownloader starting...')
 

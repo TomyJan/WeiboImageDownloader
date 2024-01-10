@@ -48,7 +48,7 @@ for (const imgUrl of imgList) {
   logger.debug('文件不存在，开始下载')
   const downloadStartTime = new Date().getTime()
   const downloadRsp = await download(
-    `http://tvax1.sinaimg.cn/large/${imgUrl}.jpg`,
+    `http://tvax1.sinaimg.cn/${config.downloadSize}/${imgUrl}.jpg`,
     imgFilePath
   )
   const downloadEndTime = new Date().getTime()
@@ -70,6 +70,7 @@ for (const imgUrl of imgList) {
     downloadFailedCount++
     downloadFailedList.push(imgUrl)
   }
+  delay(config.downloadInterval)
 }
 
 // 保存下载失败列表
@@ -106,26 +107,53 @@ if (downloadSuccessCount > 0) {
  * @returns {Promise<{code: number, msg: string}>} 下载结果
  */
 function download(url, filePath) {
+  let maxRetries = config.downloadRetry
+  let timeout = config.downloadTimeout
   return new Promise((resolve, reject) => {
-    const file = fs.createWriteStream(filePath)
-    http
-      .get(
+    let retries = 0;
+
+    function attemptDownload() {
+      const file = fs.createWriteStream(filePath);
+      const request = http.get(
         url,
         {
-          Referer:
-            'http://weibo.com/u/1699432410?refer_flag=1001030103_&is_all=1',
+          Referer: 'http://weibo.com/u/1699432410?refer_flag=1001030103_&is_all=1',
         },
         (response) => {
-          response.pipe(file)
+          response.pipe(file);
           file.on('finish', () => {
-            file.close()
-            resolve({ code: 0, msg: 'success' })
-          })
+            file.close();
+            resolve({ code: 0, msg: 'success' });
+          });
         }
-      )
-      .on('error', (err) => {
-        fs.unlinkSync(filePath)
-        reject({ code: -1, msg: err.message })
-      })
-  })
+      );
+
+      request.on('error', (err) => {
+        fs.unlinkSync(filePath);
+        reject({ code: -1, msg: err.message });
+      });
+
+      // 设置请求超时时间
+      request.setTimeout(timeout, () => {
+        request.abort();
+        retries++;
+        if (retries < maxRetries) {
+          // 等待后重试
+          delay(config.downloadRetryDelay);
+          attemptDownload();
+        } else {
+          fs.unlinkSync(filePath);
+          reject({ code: -1, msg: 'Request timed out' });
+        }
+      });
+    }
+    // 开始首次下载尝试
+    attemptDownload();
+  });
+}
+
+function delay(ms) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
 }

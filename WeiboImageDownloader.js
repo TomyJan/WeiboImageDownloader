@@ -25,11 +25,11 @@ let downloadFailedList = []
 let downloadSuccessList = []
 let downloadFailedListFile = path.join(
   config.downloadPath,
-  '${config.downloadSize}-downloadFailedList.txt'
+  `${config.downloadSize}-downloadFailedList.txt`
 )
 let downloadSuccessListFile = path.join(
   config.downloadPath,
-  '${config.downloadSize}-downloadSuccessList.txt'
+  `${config.downloadSize}-downloadSuccessList.txt`
 )
 for (const imgUrl of imgList) {
   logger.info('准备下载第', downloadCount + 1, '/', imgList.length, '个文件: ', imgUrl)

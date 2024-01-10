@@ -13,8 +13,8 @@ const imgList = fs.readFileSync(config.imgUrlMapFile, 'utf-8').split('\n')
 // logger.debug('imgList: ', imgList)
 
 // 创建下载目录
-if (!fs.existsSync(config.downloadPath)) {
-  fs.mkdirSync(config.downloadPath)
+if (!fs.existsSync(config.downloadPath + '/' + config.downloadSize)) {
+  fs.mkdirSync(config.downloadPath + '/' + config.downloadSize, { recursive: true })
 }
 
 // 下载图片
@@ -25,20 +25,22 @@ let downloadFailedList = []
 let downloadSuccessList = []
 let downloadFailedListFile = path.join(
   config.downloadPath,
-  'downloadFailedList.txt'
+  '${config.downloadSize}-downloadFailedList.txt'
 )
 let downloadSuccessListFile = path.join(
   config.downloadPath,
-  'downloadSuccessList.txt'
+  '${config.downloadSize}-downloadSuccessList.txt'
 )
 for (const imgUrl of imgList) {
+  logger.info('准备下载第', downloadCount + 1, '/', imgList.length, '个文件: ', imgUrl)
   if (imgUrl === '') {
+    logger.warn('文件URL为空，跳过下载')
     continue
   }
   downloadCount++
   const imgFileName = imgUrl + '.jpg'
-  const imgFilePath = path.join(config.downloadPath, imgFileName)
-  logger.debug('imgFilePath: ', imgFilePath)
+  const imgFilePath = path.join(config.downloadPath, config.downloadSize, imgFileName)
+  // logger.debug('imgFilePath: ', imgFilePath)
   if (fs.existsSync(imgFilePath)) {
     logger.debug('文件已存在，跳过下载')
     downloadSuccessCount++

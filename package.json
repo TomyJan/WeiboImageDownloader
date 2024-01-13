@@ -12,7 +12,10 @@
     "format": "prettier --write \"**/*.js\"",
     "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s -r 0"
   },
-  "dependencies": {},
+  "dependencies": {
+    "fs": "^0.0.1-security",
+    "node-fetch": "^3.3.2"
+  },
   "devDependencies": {
     "conventional-changelog": "^3.1.25",
     "conventional-changelog-custom-config": "^0.3.1",

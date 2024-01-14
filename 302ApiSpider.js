@@ -9,7 +9,7 @@ const imgListFile = './download/his-imgs.txt'
 // 从文件读入链接数组
 let imgList = []
 if (fs.existsSync(imgListFile)) {
-  imgList = fs.readFileSync(imgListFile, 'utf-8').split('\n')
+  imgList = fs.readFileSync(imgListFile, 'utf-8').split(/\r?\n/)
 } else {
   logger.error(`图片数组文件不存在`)
   exit(1)

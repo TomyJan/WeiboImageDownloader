@@ -9,7 +9,7 @@ logger.info('WeiboImageDownloader starting...')
 logger.setLogLevel(config.logLevel)
 
 // 从config提供的文件名读取文件列表
-const imgList = fs.readFileSync(config.imgUrlMapFile, 'utf-8').split('\n')
+const imgList = fs.readFileSync(config.imgUrlMapFile, 'utf-8').split(/\r?\n/)
 // logger.debug('imgList: ', imgList)
 
 // 创建下载目录

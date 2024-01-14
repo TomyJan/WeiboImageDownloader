@@ -42,7 +42,13 @@ while (1) {
   } catch (error) {
     // 捕获错误并处理
     const randomInRange = Math.floor(Math.random() * (10 - 5 + 1)) + 5
-    logger.error('发生错误: ', error.message, '，等待', randomInRange, 's 后重试...')
+    logger.error(
+      '发生错误: ',
+      error.message,
+      '，等待',
+      randomInRange,
+      's 后重试...'
+    )
     await delay(randomInRange * 1000)
   }
 }

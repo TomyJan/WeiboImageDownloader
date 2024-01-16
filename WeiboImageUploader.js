@@ -35,10 +35,12 @@ for (const imgFileName of imgList) {
         fs.writeFileSync(uploadedImgListFile, uploadedImgList.join('\n'), 'utf-8')
         logger.info('上传成功, 图片id:', imgUrl)
         } else {
-        logger.error('上传失败')
+          uploadedImgList.push(imgFileName + ',UPLOAD_FAILED')
+          logger.error('上传失败')
         }
     } else {
-        logger.warn('文件不存在，跳过上传')
+    uploadedImgList.push(imgFileName + ',FILE_NOT_EXIST')
+      logger.warn('文件不存在，跳过上传')
     }
 }
 

@@ -31,7 +31,7 @@ for (const imgFileName of imgList) {
     if (fs.existsSync(imgFilePath)) {
         const imgUrl = await uploadImgToWeibo(imgFilePath)
         if (imgUrl !== null) {
-        uploadedImgList.push(imgUrl)
+        uploadedImgList.push(imgFileName + ',' + imgUrl)
         fs.writeFileSync(uploadedImgListFile, uploadedImgList.join('\n'), 'utf-8')
         logger.info('上传成功, 图片id:', imgUrl)
         } else {
@@ -87,6 +87,10 @@ async function uploadImgToWeibo(imgFilePath) {
       return null
     }
     
+    if(rspJson.code === 'A20001') {
+      logger.error('图片', imgFilePath, '上传失败: 登录失效')
+      process.exit()
+    }
     const imgPid = rspJson.data.pics.pic_1.pid;
 
     if (imgPid) {

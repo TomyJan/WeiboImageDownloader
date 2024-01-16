@@ -6,8 +6,9 @@ import logger from './Tools/logger.js'
 
 // 修改这里的配置再运行
 // 如果你开启了水印, 你可能需要先前往 https://weibo.com/set/prefer 关闭水印
-// 如果单填 SUB 字段无法上传, 可以尝试填入完整 cookie 
-const weiboCookie = 'SUB=_2A25IptdPDeRhGeBN71QY9SrFzjSIHXVr2laHrDV8PUJbkNANLWf6kW1NRHCfiSiQRqF2x3_YSqeuCWvfUSKNBOFi'
+// 如果单填 SUB 字段无法上传, 可以尝试填入完整 cookie
+const weiboCookie =
+  'SUB=_2A25IptdPDeRhGeBN71QY9SrFzjSIHXVr2laHrDV8PUJbkNANLWf6kW1NRHCfiSiQRqF2x3_YSqeuCWvfUSKNBOFi'
 const imgPath = './image-path-to-upload'
 const uploadedImgListFile = './download/uploaded-imgs.txt'
 
@@ -25,21 +26,28 @@ if (imgList.length === 0) {
 let uploadedImgList = []
 
 for (const imgFileName of imgList) {
-    logger.info('准备上传第', uploadedImgList.length + 1, '/', imgList.length, '个文件: ', imgFileName)
-    const imgFilePath = path.join(imgPath, imgFileName)
-    // logger.debug('imgFilePath: ', imgFilePath)
-    if (fs.existsSync(imgFilePath)) {
-        const imgUrl = await uploadImgToWeibo(imgFilePath)
-        if (imgUrl !== null) {
-        uploadedImgList.push(imgUrl)
-        fs.writeFileSync(uploadedImgListFile, uploadedImgList.join('\n'), 'utf-8')
-        logger.info('上传成功, 图片id:', imgUrl)
-        } else {
-        logger.error('上传失败')
-        }
+  logger.info(
+    '准备上传第',
+    uploadedImgList.length + 1,
+    '/',
+    imgList.length,
+    '个文件: ',
+    imgFileName
+  )
+  const imgFilePath = path.join(imgPath, imgFileName)
+  // logger.debug('imgFilePath: ', imgFilePath)
+  if (fs.existsSync(imgFilePath)) {
+    const imgUrl = await uploadImgToWeibo(imgFilePath)
+    if (imgUrl !== null) {
+      uploadedImgList.push(imgUrl)
+      fs.writeFileSync(uploadedImgListFile, uploadedImgList.join('\n'), 'utf-8')
+      logger.info('上传成功, 图片id:', imgUrl)
     } else {
-        logger.warn('文件不存在，跳过上传')
+      logger.error('上传失败')
     }
+  } else {
+    logger.warn('文件不存在，跳过上传')
+  }
 }
 
 /**
@@ -49,53 +57,59 @@ for (const imgFileName of imgList) {
  */
 async function uploadImgToWeibo(imgFilePath) {
   try {
-    const imageBuffer = fs.readFileSync(imgFilePath);
+    const imageBuffer = fs.readFileSync(imgFilePath)
 
     // Check if the file is a valid image
     if (!isValidImage(imageBuffer)) {
       logger.error('图片文件无效: ', imgFilePath)
-      return null;
+      return null
     }
 
-    const base64Img = imageBuffer.toString('base64');
+    const base64Img = imageBuffer.toString('base64')
 
-    let uploadUrl = 'https://picupload.service.weibo.com/interface/pic_upload.php?mime=image%2Fjpeg&data=base64&url=0&markpos=1&logo=&nick=0&marks=1&app=miniblog'; //图片上传地址
+    let uploadUrl =
+      'https://picupload.service.weibo.com/interface/pic_upload.php?mime=image%2Fjpeg&data=base64&url=0&markpos=1&logo=&nick=0&marks=1&app=miniblog' //图片上传地址
 
     const upImgResp = await fetch(uploadUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
-        'Host': 'picupload.weibo.com',
-        'Origin': 'https://weibo.com',
-        'Cookie': weiboCookie,
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        Host: 'picupload.weibo.com',
+        Origin: 'https://weibo.com',
+        Cookie: weiboCookie,
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
       },
       body: new URLSearchParams({
         b64_data: base64Img,
       }),
       credentials: 'include',
-    });
+    })
 
     let responseData = await upImgResp.text()
-    responseData = responseData.replace(/([\s\S]*)<\/script>/g, '');
+    responseData = responseData.replace(/([\s\S]*)<\/script>/g, '')
     // logger.debug('responseData: ', responseData)
     let rspJson = ''
     try {
-      rspJson = JSON.parse(responseData);
+      rspJson = JSON.parse(responseData)
     } catch (error) {
-      logger.error('图片', imgFilePath, '上传失败, 解析返回失败: ', responseData)
+      logger.error(
+        '图片',
+        imgFilePath,
+        '上传失败, 解析返回失败: ',
+        responseData
+      )
       return null
     }
-    
-    const imgPid = rspJson.data.pics.pic_1.pid;
+
+    const imgPid = rspJson.data.pics.pic_1.pid
 
     if (imgPid) {
-      return imgPid;
+      return imgPid
     } else {
       logger.error('图片', imgFilePath, '上传失败: ', responseData)
       return null
     }
-
   } catch (error) {
     logger.error('图片', imgFilePath, '上传失败: ', error)
     return null
@@ -104,10 +118,10 @@ async function uploadImgToWeibo(imgFilePath) {
 
 function isValidImage(buffer) {
   try {
-    const dimensions = imageSize(buffer);
+    const dimensions = imageSize(buffer)
     // Add additional checks if needed (e.g., file size, image format)
-    return dimensions.width > 0 && dimensions.height > 0;
+    return dimensions.width > 0 && dimensions.height > 0
   } catch (error) {
-    return false; // Not a valid image
+    return false // Not a valid image
   }
 }

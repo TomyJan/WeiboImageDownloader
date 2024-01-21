@@ -1,4 +1,4 @@
-import http from 'http'
+import fetch from 'node-fetch'
 import fs from 'fs'
 import path from 'path'
 import logger from './Tools/logger.js'
@@ -62,26 +62,20 @@ for (const imgUrl of imgList) {
   }
   logger.debug('文件不存在，开始下载')
   const downloadStartTime = new Date().getTime()
-  const downloadRsp = await download(
-    `http://tvax1.sinaimg.cn/${config.downloadSize}/${imgUrl}.jpg`,
-    imgFilePath
-  )
-  const downloadEndTime = new Date().getTime()
-  if (downloadRsp.code === 0) {
-    logger.info(
-      '下载成功，耗时',
-      (downloadEndTime - downloadStartTime) / 1000,
-      '秒'
-    )
-    downloadSuccessCount++
-    downloadSuccessList.push(imgUrl)
-  } else {
-    logger.warn(
-      '下载失败，错误码',
-      downloadRsp.code,
-      '，错误信息',
-      downloadRsp.msg
-    )
+  try {
+    const downloadRsp = await download(`http://tvax1.sinaimg.cn/${config.downloadSize}/${imgUrl}.jpg`, imgFilePath)
+
+    if (downloadRsp.code === 0) {
+      logger.info(`下载成功，耗时 ${(new Date().getTime() - downloadStartTime) / 1000} 秒`)
+      downloadSuccessCount++
+      downloadSuccessList.push(imgUrl)
+    } else {
+      logger.warn(`下载失败，错误码 ${downloadRsp.code}，错误信息 ${downloadRsp.msg}`)
+      downloadFailedCount++
+      downloadFailedList.push(imgUrl)
+    }
+  } catch (error) {
+    logger.warn(`下载失败，错误信息 ${error.message}`)
     downloadFailedCount++
     downloadFailedList.push(imgUrl)
   }
@@ -121,55 +115,65 @@ if (downloadSuccessCount > 0) {
  * @param {string} filePath 文件保存路径
  * @returns {Promise<{code: number, msg: string}>} 下载结果
  */
-function download(url, filePath) {
-  let maxRetries = config.downloadRetry
-  let timeout = config.downloadTimeout
-  return new Promise((resolve, reject) => {
-    let retries = 0
+async function download(url, filePath) {
+  return new Promise(async (resolve, reject) => {
+    const maxRetries = config.downloadRetry;
+    const timeout = config.downloadTimeout;
+    let retries = 0;
 
-    function attemptDownload() {
-      const file = fs.createWriteStream(filePath)
-      const request = http.get(
-        url,
-        {
-          Referer:
-            'http://weibo.com/u/1699432410?refer_flag=1001030103_&is_all=1',
-        },
-        (response) => {
-          response.pipe(file)
-          file.on('finish', () => {
-            file.close()
-            resolve({ code: 0, msg: 'success' })
-          })
+    async function attemptDownload() {
+      try {
+        const response = await Promise.race([
+          fetch(url,
+            {
+              Referer:
+                'http://weibo.com/u/1699432410?refer_flag=1001030103_&is_all=1',
+            }),
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('请求超时')), timeout)
+          ),
+        ]);
+
+        if (!response.ok) {
+          logger.error('下载失败，状态码:', response.status);
         }
-      )
 
-      request.on('error', (err) => {
-        fs.unlinkSync(filePath)
-        reject({ code: -1, msg: err.message })
-      })
+        const fileStream = fs.createWriteStream(filePath);
+        fileStream.on('finish', function () {
+          fileStream.close();
+          resolve({ code: 0, msg: 'success' });
+        });
+        fileStream.on('error', function (err) {
+          fs.unlink(filePath);
+          reject(err);
+        });
 
-      // 设置请求超时时间
-      request.setTimeout(timeout, () => {
-        request.abort()
-        retries++
-        if (retries < maxRetries) {
-          // 等待后重试
-          delay(config.downloadRetryDelay)
-          attemptDownload()
-        } else {
-          fs.unlinkSync(filePath)
-          reject({ code: -1, msg: 'Request timed out' })
-        }
-      })
+        await response.body.pipe(fileStream);
+      } catch (error) {
+        logger.error('文件下载失败:', error.message);
+        reject(error);
+      }
     }
-    // 开始首次下载尝试
-    attemptDownload()
-  })
+
+    while (retries < maxRetries) {
+      try {
+        await attemptDownload();
+        break;
+      } catch (error) {
+        await fs.unlink(filePath);
+        retries++;
+        if (retries < maxRetries) {
+          await delay(config.downloadRetryDelay);
+        }
+      }
+    }
+
+    if (retries >= maxRetries) {
+      reject(new Error('请求超时'));
+    }
+  });
 }
 
 function delay(ms) {
-  return new Promise((resolve) => {
-    setTimeout(resolve, ms)
-  })
+  return new Promise((resolve) => setTimeout(resolve, ms))
 }

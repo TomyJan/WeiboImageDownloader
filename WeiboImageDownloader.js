@@ -63,14 +63,21 @@ for (const imgUrl of imgList) {
   logger.debug('文件不存在，开始下载')
   const downloadStartTime = new Date().getTime()
   try {
-    const downloadRsp = await download(`http://tvax1.sinaimg.cn/${config.downloadSize}/${imgUrl}.jpg`, imgFilePath)
+    const downloadRsp = await download(
+      `http://tvax1.sinaimg.cn/${config.downloadSize}/${imgUrl}.jpg`,
+      imgFilePath
+    )
 
     if (downloadRsp.code === 0) {
-      logger.info(`下载成功，耗时 ${(new Date().getTime() - downloadStartTime) / 1000} 秒`)
+      logger.info(
+        `下载成功，耗时 ${(new Date().getTime() - downloadStartTime) / 1000} 秒`
+      )
       downloadSuccessCount++
       downloadSuccessList.push(imgUrl)
     } else {
-      logger.warn(`下载失败，错误码 ${downloadRsp.code}，错误信息 ${downloadRsp.msg}`)
+      logger.warn(
+        `下载失败，错误码 ${downloadRsp.code}，错误信息 ${downloadRsp.msg}`
+      )
       downloadFailedCount++
       downloadFailedList.push(imgUrl)
     }
@@ -117,61 +124,60 @@ if (downloadSuccessCount > 0) {
  */
 async function download(url, filePath) {
   return new Promise(async (resolve, reject) => {
-    const maxRetries = config.downloadRetry;
-    const timeout = config.downloadTimeout;
-    let retries = 0;
+    const maxRetries = config.downloadRetry
+    const timeout = config.downloadTimeout
+    let retries = 0
 
     async function attemptDownload() {
       try {
         const response = await Promise.race([
-          fetch(url,
-            {
-              Referer:
-                'http://weibo.com/u/1699432410?refer_flag=1001030103_&is_all=1',
-            }),
+          fetch(url, {
+            Referer:
+              'http://weibo.com/u/1699432410?refer_flag=1001030103_&is_all=1',
+          }),
           new Promise((_, reject) =>
             setTimeout(() => reject(new Error('请求超时')), timeout)
           ),
-        ]);
+        ])
 
         if (!response.ok) {
-          logger.error('下载失败，状态码:', response.status);
+          logger.error('下载失败，状态码:', response.status)
         }
 
-        const fileStream = fs.createWriteStream(filePath);
+        const fileStream = fs.createWriteStream(filePath)
         fileStream.on('finish', function () {
-          fileStream.close();
-          resolve({ code: 0, msg: 'success' });
-        });
+          fileStream.close()
+          resolve({ code: 0, msg: 'success' })
+        })
         fileStream.on('error', function (err) {
-          fs.unlink(filePath);
-          reject(err);
-        });
+          fs.unlink(filePath)
+          reject(err)
+        })
 
-        await response.body.pipe(fileStream);
+        await response.body.pipe(fileStream)
       } catch (error) {
-        logger.error('文件下载失败:', error.message);
-        reject(error);
+        logger.error('文件下载失败:', error.message)
+        reject(error)
       }
     }
 
     while (retries < maxRetries) {
       try {
-        await attemptDownload();
-        break;
+        await attemptDownload()
+        break
       } catch (error) {
-        await fs.unlink(filePath);
-        retries++;
+        await fs.unlink(filePath)
+        retries++
         if (retries < maxRetries) {
-          await delay(config.downloadRetryDelay);
+          await delay(config.downloadRetryDelay)
         }
       }
     }
 
     if (retries >= maxRetries) {
-      reject(new Error('请求超时'));
+      reject(new Error('请求超时'))
     }
-  });
+  })
 }
 
 function delay(ms) {

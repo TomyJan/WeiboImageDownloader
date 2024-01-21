@@ -10,16 +10,27 @@ import logger from './Tools/logger.js'
 const weiboCookie =
   'SUB=_2A25IptdPDeRhGeBN71QY9SrFzjSIHXVr2laHrDV8PUJbkNANLWf6kW1NRHCfiSiQRqF2x3_YSqeuCWvfUSKNBOFi'
 const imgPath = './image-path-to-upload'
+// 当 imgListFile 非空时, 读取 list 内的文件名(文件路径还是在 imgPath 下)上传, 否则遍历 imgPath 上传
+const imgListFile = './image-filename-list-in-image-path.txt'
 const uploadedImgListFile = './download/uploaded-imgs.txt'
 
-if (!fs.existsSync(imgPath)) {
-  logger.error(`图片目录不存在`)
-  process.exit()
-}
-const imgList = fs.readdirSync(imgPath)
-if (imgList.length === 0) {
-  logger.error(`图片目录内没有文件`)
-  process.exit()
+let imgList = []
+if (imgListFile !== '') {
+  imgList = fs.readFileSync(imgListFile, 'utf-8').split(/\r?\n/)
+  if (imgList.length === 0) {
+    logger.error(`imgListFile 为空`)
+    process.exit()
+  }
+} else {
+  if (!fs.existsSync(imgPath)) {
+    logger.error(`图片目录不存在`)
+    process.exit()
+  }
+  imgList = fs.readdirSync(imgPath)
+  if (imgList.length === 0) {
+    logger.error(`图片目录内没有文件`)
+    process.exit()
+  }
 }
 
 // 遍历imglist, 调用上传方法

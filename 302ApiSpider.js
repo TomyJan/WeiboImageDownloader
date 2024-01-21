@@ -69,12 +69,13 @@ async function getImgUrl(url) {
 
   if (rsp.timeout) {
     logger.error(`请求超时...`)
+    return null
   }
 
   if (rsp.status === 302) {
     return rsp.headers.get('location')
   } else {
-    console.error(`请求失败: ${url}, ${rsp.status} ${rsp.statusText}`)
+    logger.error(`请求失败: ${url}, ${rsp.status} ${rsp.statusText}`)
     return null
   }
 }

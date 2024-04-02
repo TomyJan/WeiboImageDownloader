@@ -17,8 +17,7 @@ class Logger {
   }
 
   logMessage(message, logType = 'INFO ') {
-    const timestamp = new Date().toISOString()
-    const logMessage = `[${timestamp}] [${logType} ] ${message}`
+    const logMessage = `[${this.getTimeForLog()}] [${logType} ] ${message}`
     const currentLogFilePath = path.join(this.logDirectory, this.currentLogFile)
 
     if (fs.existsSync(currentLogFilePath)) {
@@ -31,7 +30,9 @@ class Logger {
     fs.appendFile(currentLogFilePath, logMessage + '\n', (err) => {
       if (err) {
         console.log(
-          chalk.yellow(`[${timestamp}] [WARN  ] 写入日志文件时发生错误：${err}`)
+          chalk.yellow(
+            `[${this.getTimeForLog()}] [WARN  ] 写入日志文件时发生错误：${err}`
+          )
         )
       }
     })
@@ -76,8 +77,30 @@ class Logger {
   }
 
   generateLogFileName(onStart = false) {
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
+    const now = new Date()
+    const year = now.getFullYear().toString().padStart(4, '0')
+    const month = (now.getMonth() + 1).toString().padStart(2, '0')
+    const day = now.getDate().toString().padStart(2, '0')
+    const hours = now.getHours().toString().padStart(2, '0')
+    const minutes = now.getMinutes().toString().padStart(2, '0')
+    const seconds = now.getSeconds().toString().padStart(2, '0')
+    const milliseconds = now.getMilliseconds().toString().padStart(3, '0')
+
+    const timestamp = `${year}-${month}-${day}T${hours}-${minutes}-${seconds}-${milliseconds}`
     return onStart ? `${timestamp}-start.log` : `${timestamp}.log`
+  }
+
+  getTimeForLog() {
+    const now = new Date()
+    const year = now.getFullYear().toString().padStart(4, '0')
+    const month = (now.getMonth() + 1).toString().padStart(2, '0')
+    const day = now.getDate().toString().padStart(2, '0')
+    const hours = now.getHours().toString().padStart(2, '0')
+    const minutes = now.getMinutes().toString().padStart(2, '0')
+    const seconds = now.getSeconds().toString().padStart(2, '0')
+    const milliseconds = now.getMilliseconds().toString().padStart(3, '0')
+
+    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}.${milliseconds}`
   }
 
   ensureLogDirectoryExists() {
@@ -89,7 +112,8 @@ class Logger {
 
 // 初始化全局日志记录器实例
 const logger = new Logger('debug')
-const timestamp = new Date().toISOString()
-console.log(chalk.gray(`[${timestamp}] [LOGGER] Logger initialized!`))
+console.log(
+  chalk.gray(`[${logger.getTimeForLog()}] [LOGGER] Logger initialized!`)
+)
 
 export default logger
